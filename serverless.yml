@@ -1,0 +1,103 @@
+service: playground-1
+
+configValidationMode: error
+
+package:
+  include:
+    - src/
+
+custom:
+  esbuild:
+    bundle: true
+    minify: true
+    target: node14
+  localstack:
+    debug: true
+    autostart: false
+    stages:
+      - dev
+    host: http://localstack
+    edgePort: 4566
+    lambda:
+      mountCode: false
+
+plugins:
+  - serverless-esbuild
+  - serverless-localstack
+  - serverless-step-functions
+  #- "@aligent/serverless-conventions"
+
+provider:
+  name: aws
+  # It is a good security practice to use a CloudFormation service
+  # role for performing deployments.
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html
+  #iam:
+    #deploymentRole: arn:aws:iam::166381158005:role/AligentIntegrationsDeveloper # To be replaced
+  runtime: nodejs14.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'ap-southeast-2'}
+  memorySize: 192 #mb (default for all)
+  # iamRoleStatements:
+    # - Effect: "Allow"
+    #   Action:
+    #     - "s3:*"
+    #   Resource:
+    #     - Fn::Join:
+    #       - ''
+    #       - - 'arn:aws:s3:::'
+    #         - Ref: S3BucketConfig
+    #         - '/*'
+
+functions:
+  hello:
+    handler: src/hello.handler
+  world:
+    handler: src/world.handler
+  axiosGet:
+    handler: src/axiosGet.getBreedCount
+
+stepFunctions:
+  stateMachines:
+    helloWorld:
+      name: ${self:service}-helloWorld
+      definition:
+        StartAt: Hello
+        States:
+          Hello:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [hello, Arn]
+            Next: World
+          World:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [world, Arn]
+            Next: Passthru
+          Passthru:
+            Type: Pass
+            Next: Stop
+          Stop:
+            Type: Pass
+            End: true
+#resources:
+#  Resources:
+    # S3BucketConfig:
+    #   Type: AWS::S3::Bucket
+    #   Properties:
+    #     BucketName: ${self:custom.s3.configBucket}
+    #   DeletionPolicy: Delete
+
+    # DBUsers:
+    #   Type: AWS::DynamoDB::Table
+    #   Properties:
+    #     TableName: usersTable
+    #     AttributeDefinitions:
+    #       - AttributeName: email
+    #         AttributeType: S
+    #     KeySchema:
+    #       - AttributeName: email
+    #         KeyType: HASH
+    #     ProvisionedThroughput:
+    #       ReadCapacityUnits: 1
+    #       WriteCapacityUnits: 1
