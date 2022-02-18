@@ -23,7 +23,7 @@
     "@typescript-eslint/eslint-plugin": "^5.10.0",
     "@typescript-eslint/parser": "^5.10.0",
     "eslint": "^8.7.0",
-    "jest": "^27.4.7",
+    "jest": "^27.5.1",
     "serverless-esbuild": "^1.23.3",
     "serverless-localstack": "^0.4.35",
     "serverless-step-functions": "^3.5.1",
